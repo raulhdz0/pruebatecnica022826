@@ -76,13 +76,21 @@ export default function UserList({ refresh, onRefresh }) {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {users.map((user) => (
-                            <TableRow key={user.id}>
-                                <TableCell>{user.name}</TableCell>
-                                <TableCell>{user.email}</TableCell>
-                                <TableCell>${parseFloat(user.Wallet?.balance || 0).toFixed(2)}</TableCell>
+                        {users.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={3} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                    No hay usuarios para mostrar.
+                                </TableCell>
                             </TableRow>
-                        ))}
+                        ) : (
+                            users.map((user) => (
+                                <TableRow key={user.id}>
+                                    <TableCell>{user.name}</TableCell>
+                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell>${parseFloat(user.Wallet?.balance || 0).toFixed(2)}</TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>
