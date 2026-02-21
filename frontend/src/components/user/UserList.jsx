@@ -16,12 +16,14 @@ import {
 } from "@mui/material";
 import { getUsers } from "../../api/client";
 import CreateUserForm from "./CreateUserForm.jsx";
+import TransferForm from "../transfer/TransferForm.jsx";
 
 export default function UserList({ refresh, onRefresh }) {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [openModal, setOpenModal] = useState(false);
+    const [openUserModal, setOpenUserModal] = useState(false);
+    const [openTransferModal, setOpenTransferModal] = useState(false);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -41,7 +43,12 @@ export default function UserList({ refresh, onRefresh }) {
     }, [refresh]);
 
     const handleUserCreated = () => {
-        setOpenModal(false);
+        setOpenUserModal(false);
+        if (onRefresh) onRefresh();
+    };
+
+    const handleTransferDone = () => {
+        setOpenTransferModal(false);
         if (onRefresh) onRefresh();
     };
 
@@ -51,7 +58,7 @@ export default function UserList({ refresh, onRefresh }) {
                 <Typography variant="h6" fontWeight="bold">
                     Usuarios
                 </Typography>
-                <Button variant="contained" onClick={() => setOpenModal(true)}>
+                <Button variant="contained" onClick={() => setOpenUserModal(true)}>
                     Crear Usuario
                 </Button>
             </Box>
@@ -80,18 +87,21 @@ export default function UserList({ refresh, onRefresh }) {
                 </Table>
             </TableContainer>
 
-            <Modal open={openModal} onClose={() => setOpenModal(false)}>
-                <Paper
-                    sx={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        p: 4,
-                        minWidth: 400,
-                    }}
-                >
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 4, }}>
+                <Button variant="outlined" onClick={() => setOpenTransferModal(true)}>
+                    Nueva Transferencia
+                </Button>
+            </Box>
+
+            <Modal open={openUserModal} onClose={() => setOpenUserModal(false)}>
+                <Paper sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", p: 4, minWidth: 400 }}>
                     <CreateUserForm onUserCreated={handleUserCreated} />
+                </Paper>
+            </Modal>
+
+            <Modal open={openTransferModal} onClose={() => setOpenTransferModal(false)}>
+                <Paper sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", p: 4, minWidth: 400 }}>
+                    <TransferForm onTransferDone={handleTransferDone} />
                 </Paper>
             </Modal>
         </Box>
