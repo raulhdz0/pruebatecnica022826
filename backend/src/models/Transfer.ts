@@ -1,16 +1,20 @@
 import { DataTypes, Model, Optional } from 'sequelize'
 import sequelize from '../database'
 
+export const TRANSFER_STATUSES = ["pending", "processing", "completed", "failed", "reversed"] as const;
+export type TransferStatus = typeof TRANSFER_STATUSES[number];
+
 interface TransferAttributes {
   id: string
   idempotency_key: string
   from_user_id: string
   to_user_id: string
   amount: number
+  status: string
+  createdAt?: Date;
 }
 
-interface TransferCreationAttributes extends Optional<TransferAttributes, 'id'> {}
-
+interface TransferCreationAttributes extends Optional<TransferAttributes, "id" | "status"> { }
 class Transfer extends Model<TransferAttributes, TransferCreationAttributes> implements TransferAttributes {
   public id!: string
   public idempotency_key!: string
@@ -18,6 +22,7 @@ class Transfer extends Model<TransferAttributes, TransferCreationAttributes> imp
   public to_user_id!: string
   public amount!: number
   public readonly createdAt!: Date
+  public status!: string
 }
 
 Transfer.init(
@@ -54,7 +59,12 @@ Transfer.init(
       validate: {
         min: 0.01
       }
-    }
+    },
+    status: {
+      type: DataTypes.ENUM(...TRANSFER_STATUSES),
+      allowNull: false,
+      defaultValue: "pending",
+    },
   },
   {
     sequelize,
