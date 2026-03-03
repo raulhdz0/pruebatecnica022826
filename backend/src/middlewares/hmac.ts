@@ -31,8 +31,13 @@ const verifyHmac = (req: Request, res: Response, next: NextFunction): void => {
     // Reconstruir la firma
     const body = req.body && Object.keys(req.body).length > 0 ? JSON.stringify(req.body) : "";
     const payload = `${timestamp}.${req.method}.${req.originalUrl}.${body}`;
+    console.log("payload postman:", payload);
     const expected = crypto.createHmac("sha256", SECRET).update(payload).digest("hex");
-
+console.log("signature", signature);
+console.log("timestamp", timestamp);
+console.log("body", body);
+console.log("payload", payload);
+console.log("expected", expected);
     if (signature !== expected) {
         res.status(401).json({ message: "Firma inválida." });
         return;

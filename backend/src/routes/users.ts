@@ -41,4 +41,26 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 })
 
+router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await User.findByPk(req.params.id as string);
+    if (!user) {
+      res.status(404).json({ message: "Usuario no encontrado." });
+      return;
+    }
+
+    if (req.body.version !== undefined && req.body.version !== user.version) {
+      res.status(409).json({
+        message: "El registro fue modificado por otra operación. Por favor reintente.",
+      });
+      return;
+    }
+
+    await user.update(req.body);
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router

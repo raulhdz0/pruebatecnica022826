@@ -5,6 +5,7 @@ interface UserAttributes {
   id: string
   name: string
   email: string
+  version?: number
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, 'id'> {}
@@ -13,6 +14,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public id!: string
   public name!: string
   public email!: string
+  public version!: number
   public readonly createdAt!: Date
   public readonly updatedAt!: Date
 }
@@ -32,12 +34,17 @@ User.init(
       type: DataTypes.STRING(255),
       allowNull: false,
       unique: true
-    }
+    },
+     version: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
   },
   {
     sequelize,
     tableName: 'users',
-    timestamps: true
+    timestamps: true,
+    version: true,
   }
 )
 
