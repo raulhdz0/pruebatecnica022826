@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent, FocusEvent, FormEvent } from "react";
 import {
     Typography,
     TextField,
@@ -11,18 +11,45 @@ import { createTransfer, getUsers } from "../../api/client";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "react-toastify";
 
-export default function TransferForm({ onTransferDone }) {
-    const [users, setUsers] = useState([]);
-    const [form, setForm] = useState({ from_user_id: "", to_user_id: "", amount: "" });
-    const [touched, setTouched] = useState({ from_user_id: false, to_user_id: false, amount: false });
-    const [loading, setLoading] = useState(false);
+interface Wallet {
+    balance: number;
+}
+
+interface User {
+    id: string;
+    name: string;
+    email: string;
+    Wallet?: Wallet;
+}
+
+interface FormState {
+    from_user_id: string;
+    to_user_id: string;
+    amount: string;
+}
+
+interface TouchedState {
+    from_user_id: boolean;
+    to_user_id: boolean;
+    amount: boolean;
+}
+
+interface TransferFormProps {
+    onTransferDone?: () => void;
+}
+
+export default function TransferForm({ onTransferDone }: TransferFormProps) {
+    const [users, setUsers] = useState<User[]>([]);
+    const [form, setForm] = useState<FormState>({ from_user_id: "", to_user_id: "", amount: "" });
+    const [touched, setTouched] = useState<TouchedState>({ from_user_id: false, to_user_id: false, amount: false });
+    const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
         getUsers().then(setUsers).catch(console.error);
     }, []);
 
     const fromUser = users.find((u) => u.id === form.from_user_id);
-    const availableBalance = parseFloat(fromUser?.Wallet?.balance || 0);
+    const availableBalance = parseFloat(String(fromUser?.Wallet?.balance || 0));
 
     const errors = {
         from_user_id: !form.from_user_id ? "El usuario origen es requerido." : "",
@@ -42,19 +69,22 @@ export default function TransferForm({ onTransferDone }) {
 
     const isFormValid = !errors.from_user_id && !errors.to_user_id && !errors.amount;
 
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
         setTouched({ ...touched, [e.target.name]: true });
     };
 
-    const handleBlur = (e) => {
+    const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
         setTouched({ ...touched, [e.target.name]: true });
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setTouched({ from_user_id: true, to_user_id: true, amount: true });
         if (!isFormValid) return;
+
+        // Generar la key antes del request para poder reutilizarla si falla
+        const idempotencyKey = uuidv4();
 
         setLoading(true);
         try {
@@ -62,14 +92,15 @@ export default function TransferForm({ onTransferDone }) {
                 from_user_id: form.from_user_id,
                 to_user_id: form.to_user_id,
                 amount: parseFloat(form.amount),
-                idempotency_key: uuidv4(),
+                idempotency_key: idempotencyKey,
             });
             toast.success("Transferencia realizada exitosamente.");
             setForm({ from_user_id: "", to_user_id: "", amount: "" });
             setTouched({ from_user_id: false, to_user_id: false, amount: false });
             if (onTransferDone) onTransferDone();
         } catch (err) {
-            toast.error(err.message);
+            toast.error((err as Error).message);
+            // La key se mantiene para que el usuario pueda reintentar
         } finally {
             setLoading(false);
         }
@@ -94,7 +125,7 @@ export default function TransferForm({ onTransferDone }) {
             >
                 {users.map((u) => (
                     <MenuItem key={u.id} value={u.id}>
-                        {u.name} (${parseFloat(u.Wallet?.balance || 0).toFixed(2)})
+                        {u.name} (${parseFloat(String(u.Wallet?.balance || 0)).toFixed(2)})
                     </MenuItem>
                 ))}
             </TextField>
@@ -112,7 +143,7 @@ export default function TransferForm({ onTransferDone }) {
             >
                 {users.map((u) => (
                     <MenuItem key={u.id} value={u.id}>
-                        {u.name} (${parseFloat(u.Wallet?.balance || 0).toFixed(2)})
+                        {u.name} (${parseFloat(String(u.Wallet?.balance || 0)).toFixed(2)})
                     </MenuItem>
                 ))}
             </TextField>
